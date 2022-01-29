@@ -211,6 +211,7 @@ for (let i = 0; i < 6; i++) {
         },
         transformer: (input: string) => {
           return input
+            .toLocaleLowerCase()
             .split("")
             .map((code) => {
               switch (code) {
@@ -226,8 +227,8 @@ for (let i = 0; i < 6; i++) {
         },
       },
     ]);
-    const word: string = response.word;
-    const colors: string = response.colors;
+    const word: string = response.word.toLowerCase();
+    const colors: string = response.colors.toLowerCase();
 
     if (colors === "ggggg") {
       console.log(
