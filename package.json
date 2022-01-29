@@ -10,6 +10,7 @@
   "author": "",
   "license": "MIT",
   "type": "module",
+  "bin": "dist/index.js",
   "devDependencies": {
     "@types/inquirer": "^8.2.0",
     "@types/node": "^17.0.13",

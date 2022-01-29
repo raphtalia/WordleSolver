@@ -221,6 +221,8 @@ for (let i = 0; i < 6; i++) {
                   return chalk.bgYellow("   ");
                 case "b":
                   return chalk.bgBlack("   ");
+                default:
+                  return chalk.bgRed("   ");
               }
             })
             .join(" ");
