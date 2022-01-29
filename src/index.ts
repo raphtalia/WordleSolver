@@ -48,7 +48,7 @@ function sortWordsByFreq(words: string[]): string[] {
 const includedLetters: string[] = [];
 const excludedLetters: string[] = [];
 const goodLetterPositions: string[] = [];
-const badLetterPositions: string[] = [];
+const badLetterPositions: string[][] = [[], [], [], [], []];
 
 function getBestWords(allowDuplicates = false) {
   return sortWordsByFreq(
@@ -65,8 +65,8 @@ function getBestWords(allowDuplicates = false) {
     }
 
     if (
-      badLetterPositions.some((letter, i) => {
-        if (word.charAt(i) === letter) {
+      badLetterPositions.some((letterArray, i) => {
+        if (letterArray.includes(word.charAt(i))) {
           return true;
         }
       })
@@ -96,6 +96,21 @@ function getBestWords(allowDuplicates = false) {
 
     return true;
   });
+}
+
+function getOrdinal(i: number): string {
+  var j = i % 10,
+    k = i % 100;
+  if (j == 1 && k != 11) {
+    return `${i}st`;
+  }
+  if (j == 2 && k != 12) {
+    return `${i}nd`;
+  }
+  if (j == 3 && k != 13) {
+    return `${i}rd`;
+  }
+  return `${i}th`;
 }
 
 for (let i = 0; i < 6; i++) {
@@ -131,29 +146,53 @@ for (let i = 0; i < 6; i++) {
         message: `Enter the colors of the tiles ${chalk.green("(g)reen")} ${chalk.yellow(
           "(y)ellow"
         )} ${chalk.black("(b)lack")}`,
-        validate: (input) => {
+        validate: (input: string, answers) => {
           input = input.toLowerCase();
 
           if (input.length !== 5) {
             return "Please enter 5 characters";
           }
 
-          if (
-            input.split("").some((code: string) => {
-              if (code !== "g" && code !== "y" && code !== "b") {
-                return true;
-              }
-            })
-          ) {
-            return "Please enter only g, y, or b";
-          }
+          let errorMessage: string | undefined;
 
-          return true;
+          input.split("").some((code, codeIndex) => {
+            if (code !== "g" && code !== "y" && code !== "b") {
+              errorMessage = `${code} is not a valid color code`;
+              return true;
+            }
+
+            const letter: string = answers.word.charAt(codeIndex);
+            switch (code) {
+              case "g":
+                if (excludedLetters.includes("g")) {
+                  errorMessage = `Cannot include ${letter}, it is already excluded`;
+                  return true;
+                }
+
+                break;
+              case "y":
+                if (excludedLetters.includes("y")) {
+                  errorMessage = `Cannot include ${letter}, it is already excluded`;
+                  return true;
+                }
+
+                break;
+              case "b":
+                if (includedLetters.includes("b")) {
+                  errorMessage = `Cannot exclude ${letter}, it is already included`;
+                  return true;
+                }
+
+                break;
+            }
+          });
+
+          return errorMessage ?? true;
         },
-        transformer: (input) => {
+        transformer: (input: string) => {
           return input
             .split("")
-            .map((code: string) => {
+            .map((code) => {
               switch (code) {
                 case "g":
                   return chalk.bgGreen("   ");
@@ -170,46 +209,59 @@ for (let i = 0; i < 6; i++) {
     const word: string = response.word;
     const colors: string = response.colors;
 
-    colors.split("").forEach((code, i) => {
-      const letter = word.charAt(i);
+    if (colors === "ggggg") {
+      console.log(
+        `${chalk.bold("Got the word")} ${chalk.bold.green(word)} in ${i + 1} ${
+          i === 0 ? "guess" : "guesses"
+        }`
+      );
+      break;
+    } else {
+      colors.split("").forEach((code, i) => {
+        const letter = word.charAt(i);
 
-      switch (code) {
-        case "g":
-          if (!includedLetters.includes(letter)) {
-            includedLetters.push(letter);
-          }
+        switch (code) {
+          case "g":
+            if (!includedLetters.includes(letter)) {
+              includedLetters.push(letter);
+            }
 
-          if (goodLetterPositions[i] !== letter) {
-            goodLetterPositions[i] = letter;
-          }
+            if (goodLetterPositions[i] !== letter) {
+              goodLetterPositions[i] = letter;
+            }
 
-          break;
-        case "y":
-          if (!includedLetters.includes(letter)) {
-            includedLetters.push(letter);
-          }
+            break;
+          case "y":
+            if (!includedLetters.includes(letter)) {
+              includedLetters.push(letter);
+            }
 
-          if (badLetterPositions[i] !== letter) {
-            badLetterPositions[i] = letter;
-          }
+            if (!badLetterPositions[i].includes(letter)) {
+              badLetterPositions[i].push(letter);
+            }
 
-          break;
-        case "b":
-          if (!includedLetters.includes(letter) && !excludedLetters.includes(letter)) {
-            excludedLetters.push(letter);
-          }
+            break;
+          case "b":
+            if (!includedLetters.includes(letter) && !excludedLetters.includes(letter)) {
+              excludedLetters.push(letter);
+            }
 
-          if (badLetterPositions[i] !== letter) {
-            badLetterPositions[i] = letter;
-          }
+            if (!badLetterPositions[i].includes(letter)) {
+              badLetterPositions[i].push(letter);
+            }
 
-          break;
-      }
-    });
+            break;
+        }
+      });
 
-    console.log("\n");
+      console.log("\n");
+    }
   } else {
-    console.log(`${chalk.bold("The word is")} ${chalk.bold.green(wordSuggestions[0])}`);
+    console.log(
+      `${chalk.bold("Got the word")} ${chalk.bold.green(wordSuggestions[0])} in ${i + 1} ${
+        i === 0 ? "guess" : "guesses"
+      }`
+    );
     break;
   }
 }
