@@ -98,6 +98,7 @@ function getBestWords(allowDuplicates = false) {
   });
 }
 
+/*
 function getOrdinal(i: number): string {
   var j = i % 10,
     k = i % 100;
@@ -112,6 +113,7 @@ function getOrdinal(i: number): string {
   }
   return `${i}th`;
 }
+*/
 
 for (let i = 0; i < 6; i++) {
   const wordSuggestions = i === 0 ? getBestWords(false) : getBestWords(true);
@@ -120,6 +122,22 @@ for (let i = 0; i < 6; i++) {
     console.log(
       `${chalk.underline.bold("Suggestions")}\n\n${columns(wordSuggestions.slice(0, 50))}\n`
     );
+
+    if (includedLetters.length > 0) {
+      console.log(
+        chalk.green(`Included ${chalk.bold(includedLetters.sort().join(", ").toUpperCase())}`)
+      );
+    }
+
+    if (excludedLetters.length > 0) {
+      console.log(
+        chalk.red(`Excluded ${chalk.bold(excludedLetters.sort().join(", ").toUpperCase())}`)
+      );
+    }
+
+    if (includedLetters.length > 0 || excludedLetters.length > 0) {
+      console.log("\n");
+    }
 
     const response = await inquierer.prompt([
       {
@@ -164,27 +182,29 @@ for (let i = 0; i < 6; i++) {
             const letter: string = answers.word.charAt(codeIndex);
             switch (code) {
               case "g":
-                if (excludedLetters.includes("g")) {
-                  errorMessage = `Cannot include ${letter}, it is already excluded`;
-                  return true;
+                if (excludedLetters.includes(letter)) {
+                  errorMessage = `Cannot include ${chalk.red(
+                    letter.toUpperCase()
+                  )}, it is already excluded`;
                 }
-
                 break;
               case "y":
-                if (excludedLetters.includes("y")) {
-                  errorMessage = `Cannot include ${letter}, it is already excluded`;
-                  return true;
+                if (excludedLetters.includes(letter)) {
+                  errorMessage = `Cannot include ${chalk.red(
+                    letter.toUpperCase()
+                  )}, it is already excluded`;
                 }
-
                 break;
+              /*
               case "b":
-                if (includedLetters.includes("b")) {
-                  errorMessage = `Cannot exclude ${letter}, it is already included`;
-                  return true;
+                if (includedLetters.includes(letter)) {
+                  errorMessage = `Cannot exclude ${chalk.red(letter)}, it is already included`;
                 }
-
                 break;
+                */
             }
+
+            return !!errorMessage;
           });
 
           return errorMessage ?? true;
