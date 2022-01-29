@@ -125,13 +125,13 @@ for (let i = 0; i < 6; i++) {
 
     if (includedLetters.length > 0) {
       console.log(
-        chalk.green(`Included ${chalk.bold(includedLetters.sort().join(", ").toUpperCase())}`)
+        chalk.green(`Including ${chalk.bold(includedLetters.sort().join(", ").toUpperCase())}`)
       );
     }
 
     if (excludedLetters.length > 0) {
       console.log(
-        chalk.red(`Excluded ${chalk.bold(excludedLetters.sort().join(", ").toUpperCase())}`)
+        chalk.red(`Excluding ${chalk.bold(excludedLetters.sort().join(", ").toUpperCase())}`)
       );
     }
 
