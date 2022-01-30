@@ -10,8 +10,14 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true
   },
-  "lib": ["es2015"],
-  "include": ["src/**/*"],
+  "lib": [
+    "es2015"
+  ],
+  "include": [
+    "src/**/*"
+  ],
   "exclude": [],
-  "hooks": ["copy-files"]
+  "hooks": [
+    "copy-files"
+  ]
 }

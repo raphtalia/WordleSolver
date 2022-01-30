@@ -1,18 +1,17 @@
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-process.chdir(dirname(fileURLToPath(import.meta.url)));
-
 import { readFileSync } from "fs";
 
-const masterWordList: string[] = JSON.parse(readFileSync("./words.json", "utf8"));
+import { MS_IN_DAY, GAME_EPOCH_MS } from "./constants.js";
+
+const masterWordList: string[] = JSON.parse(readFileSync("./WordleAnswers.json", "utf8"));
+export { masterWordList as wordleAnswersList };
 
 // Calculates percentage of how often letters occur in words
 const letterOccurances: { [letter: string]: number } = {};
-const letterFreqs: { [letter: string]: number } = {};
+export const letterFreqs: { [letter: string]: number } = {};
 
 // Calculates percentage of how often letters occur in words while taking into account position
 const positionOccurances: { [letter: string]: number }[] = [{}, {}, {}, {}, {}];
-const positionFreqs: { [letter: string]: number }[] = [{}, {}, {}, {}, {}];
+export const positionFreqs: { [letter: string]: number }[] = [{}, {}, {}, {}, {}];
 
 masterWordList.forEach((word) => {
   word.split("").forEach((letter, i) => {
@@ -34,9 +33,9 @@ Object.keys(letterOccurances).forEach((letter) => {
   letterFreqs[letter] = letterOccurances[letter] / masterWordList.length;
 });
 
-positionFreqs.forEach((freqs) => {
+positionOccurances.forEach((freqs, i) => {
   Object.keys(freqs).forEach((letter) => {
-    freqs[letter] = freqs[letter] / Object.keys(freqs).length;
+    positionFreqs[i][letter] = freqs[letter] / Object.values(freqs).reduce((a, b) => a + b, 0);
   });
 });
 
@@ -46,13 +45,13 @@ function hasDuplicateLetters(word: string): boolean {
     .some((letter, i) => word.slice(0, i).includes(letter) || word.slice(i + 1).includes(letter));
 }
 
-function getWordsOccuranceFreqTotal(word: string): number {
+export function getWordsOccuranceFreqTotal(word: string): number {
   return word.split("").reduce((total, letter) => {
     return total + letterFreqs[letter.toLowerCase()];
   }, 0);
 }
 
-function getWordsPositionFreqTotal(word: string): number {
+export function getWordsPositionFreqTotal(word: string): number {
   return word.split("").reduce((total, letter, i) => {
     return total + positionFreqs[i][letter.toLowerCase()];
   }, 0);
@@ -134,4 +133,13 @@ export function search(searchParams: {
 
     return true;
   });
+}
+
+export function getWordle(timeInMs?: number): { word: string; index: number } {
+  const index = Math.floor(((timeInMs ?? Date.now()) - GAME_EPOCH_MS) / MS_IN_DAY);
+
+  return {
+    word: masterWordList[index % masterWordList.length],
+    index,
+  };
 }

@@ -1,7 +1,3 @@
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-process.chdir(dirname(fileURLToPath(import.meta.url)));
-
 import chalk from "chalk";
 // @ts-ignore
 import columns from "cli-columns";
@@ -12,14 +8,23 @@ inquierer.registerPrompt("autocomplete", inquirerAutocomplete);
 
 import { ColorCodes } from "./models/ColorCodes.js";
 
+const maxWordSuggestionsToDisplay = 50;
+
 export async function askForWord(promptParams: {
   wordList: string[];
   requiredLetters: string[];
   blacklistedLetters: string[];
 }): Promise<string> {
   const { wordList, requiredLetters, blacklistedLetters } = promptParams;
+  const wordListLength = wordList.length;
 
-  console.log(`${chalk.underline.bold("Suggestions")}\n\n${columns(wordList.slice(0, 50))}\n`);
+  console.log(
+    `${chalk.bold("Suggestions")} (${
+      wordListLength > maxWordSuggestionsToDisplay
+        ? `${maxWordSuggestionsToDisplay}/${wordListLength}`
+        : wordListLength
+    })\n${columns(wordList.slice(0, maxWordSuggestionsToDisplay), { sort: false })}\n`
+  );
 
   if (requiredLetters.length > 0) {
     console.log(
@@ -34,7 +39,7 @@ export async function askForWord(promptParams: {
   }
 
   if (requiredLetters.length > 0 || blacklistedLetters.length > 0) {
-    console.log("\n");
+    console.log();
   }
 
   return (
