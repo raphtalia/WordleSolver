@@ -63,7 +63,13 @@ export function simulationResultToColorCodes(simResult: SimulationResult): strin
         .map((letter, i) => {
           if (word.charAt(i) === letter) {
             return ColorCodes.Green;
-          } else if (i <= getOccurancesInString(word, letter)) {
+          } else if (
+            word
+              .split("")
+              .map((letter, i) => (letter === guessWord.charAt(i) ? "" : letter))
+              .join("")
+              .includes(letter)
+          ) {
             return ColorCodes.Yellow;
           } else {
             return ColorCodes.Black;
