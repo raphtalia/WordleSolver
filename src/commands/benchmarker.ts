@@ -4,61 +4,9 @@ import Table from "cli-table";
 
 import { wordleAnswersList } from "../core.js";
 import { importDir } from "../utils.js";
-
-import type { StrategyParams } from "../models/StrategyParams.js";
+import { simulateGame } from "../simulator.js";
 
 const strategies = await importDir("./strategies");
-
-type SimulationResult = {
-  word: string;
-  wordsUsed: string[];
-};
-
-async function simulateGame(
-  word: string,
-  strategy: (strategyParams: StrategyParams) => Promise<string[]>
-): Promise<SimulationResult> {
-  const requiredLetters: string[] = [];
-  const blacklistedLetters: string[] = [];
-  const whitelistedLetterPositions: string[] = [];
-  const blacklistedLetterPositions: string[][] = [[], [], [], [], []];
-
-  const wordsUsed: string[] = [];
-
-  for (let i = 0; i < 100; i++) {
-    const wordSuggestions = await strategy({
-      guess: i,
-
-      requiredLetters,
-      blacklistedLetters,
-      whitelistedLetterPositions,
-      blacklistedLetterPositions,
-    });
-
-    const guessWord = wordSuggestions[0];
-    wordsUsed.push(guessWord);
-
-    if (wordSuggestions.length > 1) {
-      guessWord.split("").forEach((letter, index) => {
-        if (word.includes(letter)) {
-          requiredLetters.push(letter);
-        } else {
-          blacklistedLetters.push(letter);
-        }
-
-        if (word.charAt(index) === letter) {
-          whitelistedLetterPositions[index] = letter;
-        } else {
-          blacklistedLetterPositions[index].push(letter);
-        }
-      });
-    } else {
-      break;
-    }
-  }
-
-  return { word, wordsUsed };
-}
 
 export const name = "Strategy Benchmarker";
 
@@ -101,7 +49,10 @@ export async function main() {
     const simulationResults = (
       await Promise.all(
         wordleAnswersList.map(async (word) => {
-          return await simulateGame(word, strategyMain);
+          return await simulateGame({
+            word,
+            strategy: strategyMain,
+          });
         })
       )
     ).sort((a, b) => b.wordsUsed.length - a.wordsUsed.length);

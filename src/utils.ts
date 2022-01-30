@@ -53,3 +53,7 @@ export function lerpRGB(
     Math.round(rgb1[2] * (1 - alpha) + rgb2[2] * alpha),
   ];
 }
+
+export function getOccurancesInString(str: string, matcher: string) {
+  return str.split(matcher).length - 1;
+}

@@ -3,6 +3,8 @@ import { dirname } from "path";
 process.chdir(dirname(fileURLToPath(import.meta.url)));
 
 import inquierer from "inquirer";
+import inquirerAutocomplete from "inquirer-autocomplete-prompt";
+inquierer.registerPrompt("autocomplete", inquirerAutocomplete);
 
 import { importDir } from "./utils.js";
 
