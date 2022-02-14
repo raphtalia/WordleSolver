@@ -1,26 +1,28 @@
-import { sortWordsByOccuranceFreq, search } from "../core.js";
+import { getWordsOccuranceFreqTotal, search } from "../core.js";
 
-import type { StrategyParams } from "../models/StrategyParams";
+import { Game } from "../classes/Game.js";
 
 export const name = "Letter Frequency";
 
-export async function main(strategyParams: StrategyParams): Promise<string[]> {
+export function sort(a: string, b: string): number {
+  return getWordsOccuranceFreqTotal(b) - getWordsOccuranceFreqTotal(a);
+}
+
+export async function main(game: Game): Promise<string[]> {
   const {
     guess,
     requiredLetters,
     blacklistedLetters,
     whitelistedLetterPositions,
     blacklistedLetterPositions,
-  } = strategyParams;
+  } = game;
 
-  return sortWordsByOccuranceFreq(
-    search({
-      allowDuplicates: guess !== 0,
+  return search({
+    allowDuplicates: guess !== 0,
 
-      requiredLetters,
-      blacklistedLetters,
-      whitelistedLetterPositions,
-      blacklistedLetterPositions,
-    })
-  );
+    requiredLetters,
+    blacklistedLetters,
+    whitelistedLetterPositions,
+    blacklistedLetterPositions,
+  }).sort(sort);
 }

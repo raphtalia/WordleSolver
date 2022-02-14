@@ -57,18 +57,6 @@ export function getWordsPositionFreqTotal(word: string): number {
   }, 0);
 }
 
-export function sortWordsByOccuranceFreq(words: string[]): string[] {
-  return words.sort((a, b) => {
-    return getWordsOccuranceFreqTotal(b) - getWordsOccuranceFreqTotal(a);
-  });
-}
-
-export function sortWordsByPositionFreq(words: string[]): string[] {
-  return words.sort((a, b) => {
-    return getWordsPositionFreqTotal(b) - getWordsPositionFreqTotal(a);
-  });
-}
-
 export function search(searchParams: {
   wordList?: string[];
 
