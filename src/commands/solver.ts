@@ -4,12 +4,14 @@ import chalk from "chalk";
 import columns from "cli-columns";
 
 import { importDir } from "../utils.js";
+import { Game } from "../classes/Game.js";
 
 import { ColorCodes } from "../models/ColorCodes.js";
-import type { StrategyParams } from "../models/StrategyParams.js";
 
 const strategies = await importDir("./strategies");
-const maxWordSuggestionsToDisplay = 50;
+
+const MAX_SUGGESTIONS_DISPLAY = 50;
+
 export async function askForWord(promptParams: {
   wordList: string[];
   requiredLetters: string[];
@@ -20,10 +22,10 @@ export async function askForWord(promptParams: {
 
   console.log(
     `${chalk.bold("Suggestions")} (${
-      wordListLength > maxWordSuggestionsToDisplay
-        ? `${maxWordSuggestionsToDisplay}/${wordListLength}`
+      wordListLength > MAX_SUGGESTIONS_DISPLAY
+        ? `${MAX_SUGGESTIONS_DISPLAY}/${wordListLength}`
         : wordListLength
-    })\n${columns(wordList.slice(0, maxWordSuggestionsToDisplay), { sort: false })}\n`
+    })\n${columns(wordList.slice(0, MAX_SUGGESTIONS_DISPLAY), { sort: false })}\n`
   );
 
   if (requiredLetters.length > 0) {
@@ -162,94 +164,83 @@ export async function askForColorCodes(promptParams: {
 export const name = "Solver";
 
 export async function main() {
-  const requiredLetters: string[] = [];
-  const blacklistedLetters: string[] = [];
-  const whitelistedLetterPositions: string[] = [];
-  const blacklistedLetterPositions: string[][] = [[], [], [], [], []];
+  const { numGames, strategyName } = await inquierer.prompt([
+    {
+      type: "number",
+      name: "numGames",
+      message: "How many simultaneous games do you want to play?",
+    },
+    {
+      type: "list",
+      name: "strategyName",
+      message: "Which strategy would you like to use?",
+      choices: Object.keys(strategies).map((strategyName) => {
+        return {
+          name: strategies[strategyName].name,
+          value: strategyName,
+        };
+      }),
+    },
+  ]);
 
-  const strategy: (strategyParams: StrategyParams) => Promise<string[]> =
-    strategies[
-      (
-        await inquierer.prompt([
-          {
-            type: "list",
-            name: "strategy",
-            message: "Which strategy would you like to use?",
-            choices: Object.keys(strategies).map((strategyName) => {
-              return {
-                name: strategies[strategyName].name,
-                value: strategyName,
-              };
-            }),
-          },
-        ])
-      ).strategy
-    ].main;
+  const strategy: (game: Game) => Promise<string[]> = strategies[strategyName].main;
+  const sort: (a: string, b: string) => number = strategies[strategyName].sort;
 
-  for (let i = 0; i < 6; i++) {
-    const wordSuggestions = await strategy({
-      guess: i,
+  const games: Game[] = [];
 
-      requiredLetters,
-      blacklistedLetters,
-      whitelistedLetterPositions,
-      blacklistedLetterPositions,
+  for (let i = 0; i < numGames; i++) {
+    games.push(new Game(strategy));
+  }
+
+  for (let i = 0; i < 9; i++) {
+    let wordSuggestions: string[] = [];
+    for (const game of games) {
+      if (!game.finished) {
+        wordSuggestions = wordSuggestions.concat(await game.getSuggestions());
+      }
+    }
+    wordSuggestions = wordSuggestions
+      .filter((word, i) => wordSuggestions.indexOf(word) === i)
+      .sort(sort);
+
+    const word = await askForWord({
+      wordList: wordSuggestions,
+      requiredLetters: numGames === 1 ? games[0].requiredLetters : [],
+      blacklistedLetters: numGames === 1 ? games[0].blacklistedLetters : [],
     });
 
+    for (const game of games) {
+      if (!game.finished) {
+        const colors = await askForColorCodes({
+          word,
+          blacklistedLetters: game.blacklistedLetters,
+        });
+
+        if (game.tryWord(word, colors)) {
+          console.log(
+            `${chalk.bold("Got the word")} ${chalk.bold.green(word)} in ${i + 1} ${
+              i === 0 ? "guess" : "guesses"
+            }`
+          );
+        }
+      }
+    }
+
+    /*
     if (wordSuggestions.length > 1) {
       const word = await askForWord({
         wordList: wordSuggestions,
-        requiredLetters,
-        blacklistedLetters,
+        requiredLetters: game.requiredLetters,
+        blacklistedLetters: game.blacklistedLetters,
       });
-      const colors = await askForColorCodes({ word, blacklistedLetters });
+      const colors = await askForColorCodes({ word, blacklistedLetters: game.blacklistedLetters });
 
-      if (colors === ColorCodes.Green.repeat(5)) {
+      if (game.tryWord(word, colors)) {
         console.log(
           `${chalk.bold("Got the word")} ${chalk.bold.green(word)} in ${i + 1} ${
             i === 0 ? "guess" : "guesses"
           }`
         );
-        break;
-      } else {
-        colors.split("").forEach((code, i) => {
-          const letter = word.charAt(i);
-
-          switch (code) {
-            case ColorCodes.Green:
-              if (!requiredLetters.includes(letter)) {
-                requiredLetters.push(letter);
-              }
-
-              if (whitelistedLetterPositions[i] !== letter) {
-                whitelistedLetterPositions[i] = letter;
-              }
-
-              break;
-            case ColorCodes.Yellow:
-              if (!requiredLetters.includes(letter)) {
-                requiredLetters.push(letter);
-              }
-
-              if (!blacklistedLetterPositions[i].includes(letter)) {
-                blacklistedLetterPositions[i].push(letter);
-              }
-
-              break;
-            case ColorCodes.Black:
-              if (!requiredLetters.includes(letter) && !blacklistedLetters.includes(letter)) {
-                blacklistedLetters.push(letter);
-              }
-
-              if (!blacklistedLetterPositions[i].includes(letter)) {
-                blacklistedLetterPositions[i].push(letter);
-              }
-
-              break;
-          }
-        });
-
-        console.log("\n");
       }
     } else {
       console.log(
@@ -259,5 +250,6 @@ export async function main() {
       );
       break;
     }
+    */
   }
 }
